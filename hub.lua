@@ -5,33 +5,53 @@
     ██║╚██╔╝██║██╔══██╗     ██╔██╗ ██╔══╝  ██║╚██╗██║██║   ██║
     ██║ ╚═╝ ██║██║  ██║    ██╔╝ ██╗███████╗██║ ╚████║╚██████╔╝
     ╚═╝     ╚═╝╚═╝  ╚═╝    ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝ ╚═════╝
-        H U B   S C R I P T   v3.0  (Thumbnail + JSON Live)
+        H U B   S C R I P T   v4.0  (FINAL — Minimize + Logo)
 ]]
 
 --=====================================================================
--- ⚙️ KONFIGURASI UTAMA — GANTI URL INI KE PUNYAMU
+-- ⚙️  KONFIGURASI UTAMA — EDIT DI SINI
 --=====================================================================
-local SCRIPTS_JSON_URL = "https://github.com/xanderzachky/mrxenohub.lua/blob/main/scripts.json"
+local CONFIG = {
+    Title     = "Mr.Xeno Hub",
+    Version   = "v4.0",
+    Keybind   = Enum.KeyCode.RightShift,
 
--- Fallback (kalau JSON gagal di-fetch / offline)
+    -- 🖼️  CUSTOM LOGO:
+    --    Isi dengan "rbxassetid://ID_GAMBAR" → pakai image (no background)
+    --    Kosongkan ""                          → fallback tampil teks "Mr"
+    LogoId    = "",
+
+    -- 🌐  URL JSON daftar script (WAJIB pakai raw.githubusercontent.com)
+    ScriptsURL = "https://raw.githubusercontent.com/xanderzachky/mrxenohub.lua/main/scripts.json",
+
+    TweenTime = 0.28,
+    Colors = {
+        Background = Color3.fromRGB(14, 14, 22),
+        Panel      = Color3.fromRGB(22, 22, 34),
+        PanelAlt   = Color3.fromRGB(30, 30, 45),
+        Card       = Color3.fromRGB(28, 28, 42),
+        Accent     = Color3.fromRGB(150, 90, 255),
+        AccentDark = Color3.fromRGB(90, 50, 180),
+        Text       = Color3.fromRGB(240, 240, 255),
+        SubText    = Color3.fromRGB(150, 150, 180),
+        Stroke     = Color3.fromRGB(45, 45, 65),
+        Err        = Color3.fromRGB(230, 80, 80),
+        Warn       = Color3.fromRGB(255, 170, 60),
+        Ok         = Color3.fromRGB(100, 220, 140),
+    }
+}
+
+-- Fallback (kalau JSON gagal di-fetch)
 local FALLBACK_SCRIPTS = {
     {
-        name     = "John Doe",
-        category = "Combat",
-        icon     = "🔫",
-        thumbnail= "",
-        desc     = "Script John Doe",
-        type     = "button",
-        url      = "https://pastebin.com/raw/Q8dznf77",
+        name = "John Doe",  category = "Combat", icon = "🔫",
+        thumbnail = "",     desc = "Script John Doe",
+        type = "button",    url = "https://pastebin.com/raw/Q8dznf77",
     },
     {
-        name     = "GluttonyKid",
-        category = "Combat",
-        icon     = "😈",
-        thumbnail= "",
-        desc     = "Script GluttonyKid",
-        type     = "button",
-        url      = "https://pastebin.com/raw/w3WFT9Vf",
+        name = "GluttonyKid", category = "Combat", icon = "😈",
+        thumbnail = "",       desc = "Script GluttonyKid",
+        type = "button",      url = "https://pastebin.com/raw/w3WFT9Vf",
     },
 }
 
@@ -56,27 +76,8 @@ end
 _G.MrXenoHubLoaded = true
 
 --=====================================================================
--- CONFIG UI
+-- PALETTE
 --=====================================================================
-local CONFIG = {
-    Title     = "Mr.Xeno Hub",
-    Version   = "v3.0",
-    Keybind   = Enum.KeyCode.RightShift,
-    TweenTime = 0.28,
-    Colors = {
-        Background = Color3.fromRGB(14, 14, 22),
-        Panel      = Color3.fromRGB(22, 22, 34),
-        PanelAlt   = Color3.fromRGB(30, 30, 45),
-        Card       = Color3.fromRGB(28, 28, 42),
-        Accent     = Color3.fromRGB(150, 90, 255),
-        AccentDark = Color3.fromRGB(90, 50, 180),
-        Text       = Color3.fromRGB(240, 240, 255),
-        SubText    = Color3.fromRGB(150, 150, 180),
-        Stroke     = Color3.fromRGB(45, 45, 65),
-        Err        = Color3.fromRGB(230, 80, 80),
-    }
-}
-
 local PALETTE = {
     Color3.fromRGB(150, 90, 255),
     Color3.fromRGB(80, 200, 255),
@@ -135,8 +136,38 @@ function Utils.tween(inst, props, t)
 end
 
 --=====================================================================
--- FETCH + RESOLVE THUMBNAIL
+-- HELPERS (dideklarasi duluan biar bisa dipakai di manapun)
 --=====================================================================
+local function isRobloxAsset(str)
+    if type(str) ~= "string" or str == "" then return false end
+    return (str:match("^rbxassetid://") or str:match("^rbxthumb://")
+        or str:match("^rbxasset://") or str:match("^http")) ~= nil
+end
+
+-- Bikin logo: image kalau ada LogoId, kalau kosong → teks "Mr"
+local function makeLogo(parent, size, customColor)
+    if CONFIG.LogoId ~= "" and isRobloxAsset(CONFIG.LogoId) then
+        return Utils.new("ImageLabel", {
+            Size = UDim2.new(0, size, 0, size),
+            BackgroundTransparency = 1,
+            Image = CONFIG.LogoId,
+            ImageColor3 = Color3.new(1, 1, 1),
+            ScaleType = Enum.ScaleType.Fit,
+            Parent = parent,
+        })
+    else
+        return Utils.new("TextLabel", {
+            Size = UDim2.new(0, size, 0, size),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.GothamBlack,
+            Text = "Mr",
+            TextColor3 = customColor or CONFIG.Colors.Accent,
+            TextSize = math.floor(size * 0.6),
+            Parent = parent,
+        })
+    end
+end
+
 local function fetchJSON(url)
     local ok, result = pcall(function()
         local raw = game:HttpGet(url, true)
@@ -149,13 +180,6 @@ local function fetchJSON(url)
     return nil
 end
 
--- Cek thumbnail: rbxassetid:// / rbxthumb:// valid, selain itu pakai emoji
-local function isRobloxAsset(str)
-    if type(str) ~= "string" or str == "" then return false end
-    return str:match("^rbxassetid://") or str:match("^rbxthumb://")
-        or str:match("^rbxasset://") or str:match("^http")
-end
-
 --=====================================================================
 -- HUB API
 --=====================================================================
@@ -163,7 +187,6 @@ local Hub = {}
 Hub.Scripts = {}
 Hub.UI      = {}
 
--- Normalisasi dari JSON → internal format
 local function normalizeScript(t)
     return {
         Name      = t.name or "Unnamed",
@@ -179,9 +202,7 @@ local function normalizeScript(t)
                 local ok, err = pcall(function()
                     loadstring(game:HttpGet(t.url, true))()
                 end)
-                if not ok then
-                    return false, tostring(err)
-                end
+                if not ok then return false, tostring(err) end
                 return true
             end
             return false, "Tidak ada URL script."
@@ -208,7 +229,7 @@ function Notify:Init(parent)
         Size = UDim2.new(0, 260, 1, -40),
         Position = UDim2.new(1, -20, 0, 20),
         BackgroundTransparency = 1,
-        ZIndex = 100,
+        ZIndex = 200,
         Parent = parent,
     })
     Utils.new("UIListLayout", {
@@ -227,7 +248,7 @@ function Notify:Push(text, color)
         Size = UDim2.new(1, 0, 0, 42),
         BackgroundColor3 = CONFIG.Colors.Panel,
         BackgroundTransparency = 1,
-        ZIndex = 100,
+        ZIndex = 200,
         Parent = notifyHolder,
     })
     Utils.corner(frame, 8)
@@ -301,6 +322,7 @@ local CARD_W, CARD_H = 180, 300
 local CARD_GAP = 14
 
 local function buildUI()
+    -- Parent
     local parent
     pcall(function()
         if CoreGui:FindFirstChild("MrXenoHubUI") then
@@ -310,6 +332,7 @@ local function buildUI()
             Name = "MrXenoHubUI",
             ResetOnSpawn = false,
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+            DisplayOrder = 999,
             Parent = CoreGui,
         })
     end)
@@ -317,17 +340,21 @@ local function buildUI()
         parent = Utils.new("ScreenGui", {
             Name = "MrXenoHubUI",
             ResetOnSpawn = false,
+            DisplayOrder = 999,
             Parent = LocalPlayer:WaitForChild("PlayerGui"),
         })
     end
     Hub.UI.ScreenGui = parent
 
-    --========================= MAIN =========================
+    --========================= MAIN FRAME =========================
     local mainW = CARD_W * 3 + CARD_GAP * 2 + 60
+    local mainH = 440
+    local startPos = UDim2.new(0.5, -mainW/2, 0.5, -mainH/2)
+
     local main = Utils.new("Frame", {
         Name = "Main",
-        Size = UDim2.new(0, mainW, 0, 440),
-        Position = UDim2.new(0.5, -mainW/2, 0.5, -220),
+        Size = UDim2.new(0, mainW, 0, mainH),
+        Position = startPos,
         BackgroundColor3 = CONFIG.Colors.Background,
         BorderSizePixel = 0,
         ClipsDescendants = true,
@@ -339,13 +366,14 @@ local function buildUI()
 
     --========================= HEADER =========================
     local header = Utils.new("Frame", {
+        Name = "Header",
         Size = UDim2.new(1, 0, 0, 54),
         BackgroundColor3 = CONFIG.Colors.Panel,
         BorderSizePixel = 0,
         Parent = main,
     })
     Utils.corner(header, 14)
-    Utils.new("Frame", {
+    Utils.new("Frame", {  -- nutup sudut bawah header
         Size = UDim2.new(1, 0, 0, 14),
         Position = UDim2.new(0, 0, 1, -14),
         BackgroundColor3 = CONFIG.Colors.Panel,
@@ -353,17 +381,20 @@ local function buildUI()
         Parent = header,
     })
 
-    Utils.new("Frame", {
-        Size = UDim2.new(0, 10, 0, 10),
-        Position = UDim2.new(0, 18, 0.5, 0),
+    -- Logo (image / teks "Mr")
+    local logoHolder = Utils.new("Frame", {
+        Size = UDim2.new(0, 30, 0, 30),
+        Position = UDim2.new(0, 12, 0.5, 0),
         AnchorPoint = UDim2.new(0, 0, 0.5, 0),
-        BackgroundColor3 = CONFIG.Colors.Accent,
+        BackgroundTransparency = 1,
         Parent = header,
-    }):Let(function(d) Utils.corner(d, 5) end) -- fallback, ok kalau error
+    })
+    makeLogo(logoHolder, 30, CONFIG.Colors.Accent)
 
+    -- Judul
     Utils.new("TextLabel", {
         Size = UDim2.new(0, 250, 1, 0),
-        Position = UDim2.new(0, 38, 0, 0),
+        Position = UDim2.new(0, 50, 0, 0),
         BackgroundTransparency = 1,
         Font = Enum.Font.GothamBold,
         Text = CONFIG.Title,
@@ -373,36 +404,41 @@ local function buildUI()
         Parent = header,
     })
 
-    -- Refresh button
-    local refreshBtn = Utils.new("TextButton", {
-        Size = UDim2.new(0, 30, 0, 26),
+    --========================= HEADER BUTTONS =========================
+    -- 🔽 MINIMIZE
+    local minBtn = Utils.new("TextButton", {
+        Size = UDim2.new(0, 26, 0, 26),
         Position = UDim2.new(1, -108, 0.5, 0),
+        AnchorPoint = UDim2.new(0, 0, 0.5, 0),
+        BackgroundColor3 = CONFIG.Colors.PanelAlt,
+        Text = "—",
+        Font = Enum.Font.GothamBold,
+        TextColor3 = CONFIG.Colors.SubText,
+        TextSize = 15,
+        AutoButtonColor = false,
+        Parent = header,
+    })
+    Utils.corner(minBtn, 6)
+
+    -- ⟳ REFRESH
+    local refreshBtn = Utils.new("TextButton", {
+        Size = UDim2.new(0, 26, 0, 26),
+        Position = UDim2.new(1, -76, 0.5, 0),
         AnchorPoint = UDim2.new(0, 0, 0.5, 0),
         BackgroundColor3 = CONFIG.Colors.PanelAlt,
         Text = "⟳",
         Font = Enum.Font.GothamBold,
         TextColor3 = CONFIG.Colors.SubText,
-        TextSize = 16,
+        TextSize = 15,
         AutoButtonColor = false,
         Parent = header,
     })
     Utils.corner(refreshBtn, 6)
 
-    Utils.new("TextLabel", {
-        Size = UDim2.new(0, 70, 1, 0),
-        Position = UDim2.new(1, -74, 0, 0),
-        BackgroundTransparency = 1,
-        Font = Enum.Font.Gotham,
-        Text = CONFIG.Version,
-        TextColor3 = CONFIG.Colors.SubText,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        Parent = header,
-    })
-
+    -- ✕ CLOSE
     local closeBtn = Utils.new("TextButton", {
         Size = UDim2.new(0, 26, 0, 26),
-        Position = UDim2.new(1, -36, 0.5, 0),
+        Position = UDim2.new(1, -44, 0.5, 0),
         AnchorPoint = UDim2.new(0, 0, 0.5, 0),
         BackgroundColor3 = Color3.fromRGB(60, 30, 40),
         Text = "✕",
@@ -413,10 +449,6 @@ local function buildUI()
         Parent = header,
     })
     Utils.corner(closeBtn, 6)
-    closeBtn.MouseButton1Click:Connect(function()
-        main.Visible = false
-        Notify:Push("Hub disembunyikan. Tekan [" .. CONFIG.Keybind.Name .. "]", CONFIG.Colors.Accent)
-    end)
 
     makeDraggable(main, header)
 
@@ -462,7 +494,7 @@ local function buildUI()
     local function renderDetail(s, color)
         for _, c in ipairs(detail:GetChildren()) do c:Destroy() end
 
-        -- Hero image / gradient header
+        -- Hero
         local hero = Utils.new("Frame", {
             Size = UDim2.new(1, 0, 0, 140),
             BackgroundColor3 = color,
@@ -475,16 +507,14 @@ local function buildUI()
             Parent = hero,
         })
 
-        -- Thumbnail image (kalau ada)
         if isRobloxAsset(s.Thumbnail) then
-            local img = Utils.new("ImageLabel", {
+            Utils.new("ImageLabel", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Image = s.Thumbnail,
                 ScaleType = Enum.ScaleType.Crop,
                 Parent = hero,
             })
-            -- overlay gelap biar tulisan keliatan
             local overlay = Utils.new("Frame", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundColor3 = Color3.new(0, 0, 0),
@@ -501,7 +531,6 @@ local function buildUI()
                 Parent = overlay,
             })
         else
-            -- fallback: emoji besar
             Utils.new("TextLabel", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -513,7 +542,7 @@ local function buildUI()
             })
         end
 
-        -- Back button overlay
+        -- Back
         local back = Utils.new("TextButton", {
             Size = UDim2.new(0, 40, 0, 34),
             Position = UDim2.new(0, 14, 0, 12),
@@ -544,7 +573,7 @@ local function buildUI()
             Parent = detail,
         })
 
-        -- Badge kategori
+        -- Badge
         local badge = Utils.new("Frame", {
             Size = UDim2.new(0, 100, 0, 22),
             Position = UDim2.new(0, 20, 0, 190),
@@ -564,7 +593,7 @@ local function buildUI()
             Parent = badge,
         })
 
-        -- Desc panel
+        -- Desc
         local descBox = Utils.new("Frame", {
             Size = UDim2.new(1, -40, 0, 90),
             Position = UDim2.new(0, 20, 0, 228),
@@ -587,7 +616,7 @@ local function buildUI()
             Parent = descBox,
         })
 
-        -- RUN button
+        -- RUN
         local runBtn = Utils.new("TextButton", {
             Size = UDim2.new(1, -40, 0, 50),
             Position = UDim2.new(0, 20, 1, -66),
@@ -610,16 +639,10 @@ local function buildUI()
         })
 
         runBtn.MouseEnter:Connect(function()
-            Utils.tween(runBtn, {
-                Size = UDim2.new(1, -34, 0, 54),
-                Position = UDim2.new(0, 17, 1, -68),
-            }, 0.15)
+            Utils.tween(runBtn, { Size = UDim2.new(1, -34, 0, 54), Position = UDim2.new(0, 17, 1, -68) }, 0.15)
         end)
         runBtn.MouseLeave:Connect(function()
-            Utils.tween(runBtn, {
-                Size = UDim2.new(1, -40, 0, 50),
-                Position = UDim2.new(0, 20, 1, -66),
-            }, 0.15)
+            Utils.tween(runBtn, { Size = UDim2.new(1, -40, 0, 50), Position = UDim2.new(0, 20, 1, -66) }, 0.15)
         end)
 
         runBtn.MouseButton1Click:Connect(function()
@@ -657,7 +680,7 @@ local function buildUI()
         Utils.corner(card, 12)
         Utils.stroke(card, CONFIG.Colors.Stroke, 1, 0.5)
 
-        -- Thumbnail top area (140px)
+        -- Thumbnail area
         local thumbHolder = Utils.new("Frame", {
             Size = UDim2.new(1, 0, 0, 140),
             BackgroundColor3 = color,
@@ -666,7 +689,6 @@ local function buildUI()
             Parent = card,
         })
         Utils.corner(thumbHolder, 12)
-        -- fill bawah biar cuma sudut atas yang rounded
         Utils.new("Frame", {
             Size = UDim2.new(1, 0, 0, 12),
             Position = UDim2.new(0, 0, 1, -12),
@@ -674,8 +696,6 @@ local function buildUI()
             BorderSizePixel = 0,
             Parent = thumbHolder,
         })
-
-        -- Gradient fallback (kalau thumbnail kosong)
         Utils.new("UIGradient", {
             Color = ColorSequence.new(color, color:Lerp(Color3.new(0,0,0), 0.5)),
             Rotation = 45,
@@ -691,7 +711,6 @@ local function buildUI()
                 Parent = thumbHolder,
             })
         else
-            -- fallback: emoji besar
             Utils.new("TextLabel", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -764,7 +783,6 @@ local function buildUI()
             Parent = card,
         })
 
-        -- Hover
         card.MouseEnter:Connect(function()
             Utils.tween(card, {
                 Size = UDim2.new(0, CARD_W + 6, 0, CARD_H + 6),
@@ -780,9 +798,7 @@ local function buildUI()
             }, 0.18)
         end)
 
-        card.MouseButton1Click:Connect(function()
-            openDetail(s, color)
-        end)
+        card.MouseButton1Click:Connect(function() openDetail(s, color) end)
     end
 
     --========================= POPULATE =========================
@@ -793,42 +809,147 @@ local function buildUI()
         for i, s in ipairs(scripts) do
             makeCard(s, i, pickColor(i))
         end
-        scroller.CanvasSize = UDim2.new(0, #scripts * (CARD_W + CARD_GAP) + 10, 0, 0)
+        scroller.CanvasSize = UDim2.new(0, #scripts * (CARD_W + CARD_GAP) + 20, 0, 0)
     end
 
-    --========================= REFRESH BTN =========================
-    refreshBtn.MouseButton1Click:Connect(function()
-        refreshBtn.Text = "⏳"
-        Notify:Push("⟳  Refresh daftar script...", CONFIG.Colors.Accent)
-        task.spawn(function()
-            local fetched = fetchJSON(SCRIPTS_JSON_URL)
-            if fetched then
-                Hub:LoadScripts(fetched)
-                populate(Hub.Scripts)
-                Notify:Push("✅  " .. #Hub.Scripts .. " script ter-load", CONFIG.Colors.Accent)
-            else
-                Hub:LoadScripts(FALLBACK_SCRIPTS)
-                populate(Hub.Scripts)
-                Notify:Push("⚠️  Gagal fetch, pakai fallback", Color3.fromRGB(255, 170, 60))
-            end
-            refreshBtn.Text = "⟳"
-        end)
-    end)
-    refreshBtn.MouseEnter:Connect(function()
-        Utils.tween(refreshBtn, { BackgroundColor3 = CONFIG.Colors.AccentDark })
-    end)
-    refreshBtn.MouseLeave:Connect(function()
-        Utils.tween(refreshBtn, { BackgroundColor3 = CONFIG.Colors.PanelAlt })
-    end)
-
-    --========================= INIT LOAD =========================
     Hub.UI.Scroller = scroller
     Hub.UI.Populate = populate
 
-    -- Notify holder DULU sebelum async
-    Notify:Init(parent)
+    --========================= MINIMIZE SYSTEM =========================
+    -- Simpan state
+    local isMinimized = false
+    local savedPos = nil
 
+    -- Bubble kecil (muncul pas minimize)
+    local bubble = Utils.new("TextButton", {
+        Name = "MinimizedBubble",
+        Size = UDim2.new(0, 56, 0, 56),
+        Position = UDim2.new(0, 20, 0, 20),
+        BackgroundColor3 = CONFIG.Colors.Panel,
+        Text = "",
+        AutoButtonColor = false,
+        Visible = false,
+        ZIndex = 150,
+        Parent = parent,
+    })
+    Utils.corner(bubble, 28)
+    Utils.stroke(bubble, CONFIG.Colors.Accent, 1.5, 0.3)
+
+    -- Logo di bubble
+    local bubbleLogoHolder = Utils.new("Frame", {
+        Size = UDim2.new(0, 36, 0, 36),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        AnchorPoint = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 1,
+        Parent = bubble,
+    })
+    makeLogo(bubbleLogoHolder, 36, CONFIG.Colors.Accent)
+
+    makeDraggable(bubble)
+
+    local function setMinimized(state)
+        if state == isMinimized then return end
+        isMinimized = state
+
+        if state then
+            -- Simpan posisi terakhir
+            savedPos = main.Position
+
+            -- Animasi mengecil ke pojok kiri atas
+            local targetPos = UDim2.new(0, 20, 0, 20)
+
+            Utils.tween(main, {
+                Size = UDim2.new(0, 56, 0, 56),
+                Position = targetPos,
+                BackgroundTransparency = 1,
+            }, 0.28)
+
+            -- Sembunyikan isi
+            header.Visible = false
+            scroller.Visible = false
+            detail.Visible = false
+
+            task.wait(0.28)
+            if isMinimized then
+                main.Visible = false
+                bubble.Visible = true
+                Utils.tween(bubble, { BackgroundTransparency = 0 }, 0.2)
+            end
+        else
+            -- Restore
+            bubble.Visible = false
+            main.Visible = true
+            main.BackgroundTransparency = 0
+
+            -- Balikin ukuran
+            Utils.tween(main, {
+                Size = UDim2.new(0, mainW, 0, mainH),
+                Position = savedPos or startPos,
+            }, 0.32)
+
+            task.wait(0.05)
+            header.Visible = true
+            scroller.Visible = true
+            -- detail sengaja dibiarkan di posisi slide kanan
+            detail.Position = UDim2.new(1, 0, 0, 54)
+        end
+    end
+
+    -- Klik bubble → restore
+    bubble.MouseButton1Click:Connect(function() setMinimized(false) end)
+
+    -- Klik minimize button
+    minBtn.MouseButton1Click:Connect(function() setMinimized(true) end)
+
+    --========================= CLOSE =========================
+    closeBtn.MouseButton1Click:Connect(function()
+        main.Visible = false
+        bubble.Visible = false
+        Notify:Push("Hub disembunyikan. Tekan [" .. CONFIG.Keybind.Name .. "]", CONFIG.Colors.Accent)
+    end)
+
+    --========================= HOVER BUTTONS =========================
+    local function hoverBind(btn, normalColor, hoverColor)
+        btn.MouseEnter:Connect(function()
+            Utils.tween(btn, { BackgroundColor3 = hoverColor }, 0.15)
+        end)
+        btn.MouseLeave:Connect(function()
+            Utils.tween(btn, { BackgroundColor3 = normalColor }, 0.15)
+        end)
+    end
+    hoverBind(minBtn,     CONFIG.Colors.PanelAlt, CONFIG.Colors.AccentDark)
+    hoverBind(refreshBtn, CONFIG.Colors.PanelAlt, CONFIG.Colors.AccentDark)
+    hoverBind(closeBtn,   Color3.fromRGB(60, 30, 40), Color3.fromRGB(120, 40, 55))
+
+    --========================= REFRESH =========================
+    refreshBtn.MouseButton1Click:Connect(function()
+        refreshBtn.Text = "⏳"
+        refreshBtn.TextColor3 = CONFIG.Colors.Warn
+        Notify:Push("⟳  Refresh daftar script...", CONFIG.Colors.Accent)
+
+        task.spawn(function()
+            local fetched = fetchJSON(CONFIG.ScriptsURL)
+            if fetched then
+                Hub:LoadScripts(fetched)
+                populate(Hub.Scripts)
+                Notify:Push("✅  " .. #Hub.Scripts .. " script ter-load", CONFIG.Colors.Ok)
+            else
+                Hub:LoadScripts(FALLBACK_SCRIPTS)
+                populate(Hub.Scripts)
+                Notify:Push("⚠️  Gagal fetch, pakai fallback", CONFIG.Colors.Warn)
+            end
+            refreshBtn.Text = "⟳"
+            refreshBtn.TextColor3 = CONFIG.Colors.SubText
+        end)
+    end)
+
+    --========================= INIT =========================
+    Notify:Init(parent)
     populate(Hub.Scripts)
+
+    -- Expose untuk keybind
+    Hub.UI.SetMinimized = setMinimized
+    Hub.UI.IsMinimized  = function() return isMinimized end
 end
 
 --=====================================================================
@@ -839,12 +960,25 @@ local function hookKeybind()
         if gpe then return end
         if input.KeyCode == CONFIG.Keybind then
             local main = Hub.UI.Main
-            if main then
-                main.Visible = not main.Visible
-                if not main.Visible and Hub.UI.Detail then
+            if not main then return end
+
+            -- Kalau lagi minimized → restore
+            if Hub.UI.IsMinimized and Hub.UI.IsMinimized() then
+                Hub.UI.SetMinimized(false)
+                return
+            end
+
+            -- Kalau hidden (close) → tampilkan
+            if not main.Visible then
+                main.Visible = true
+                if Hub.UI.Detail then
                     Hub.UI.Detail.Position = UDim2.new(1, 0, 0, 54)
                 end
+                return
             end
+
+            -- Kalau udah keliatan → minimize
+            Hub.UI.SetMinimized(true)
         end
     end)
 end
@@ -853,19 +987,18 @@ end
 -- MAIN FLOW
 --=====================================================================
 task.spawn(function()
-    -- Load fallback dulu biar UI cepet muncul
     Hub:LoadScripts(FALLBACK_SCRIPTS)
     buildUI()
     hookKeybind()
 
-    -- Baru fetch dari JSON
+    -- Fetch JSON
     Notify:Push("🌐  Fetching script list...", CONFIG.Colors.Accent)
-    local fetched = fetchJSON(SCRIPTS_JSON_URL)
+    local fetched = fetchJSON(CONFIG.ScriptsURL)
     if fetched then
         Hub:LoadScripts(fetched)
         if Hub.UI.Populate then Hub.UI.Populate(Hub.Scripts) end
         Notify:Push("✨  " .. #Hub.Scripts .. " script siap dipakai", CONFIG.Colors.Accent)
     else
-        Notify:Push("⚠️  Gagal fetch JSON, pakai daftar default", Color3.fromRGB(255, 170, 60))
+        Notify:Push("⚠️  Gagal fetch JSON, pakai daftar default", CONFIG.Colors.Warn)
     end
 end)
