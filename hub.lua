@@ -11,7 +11,7 @@
 --=====================================================================
 -- ⚙️ KONFIGURASI UTAMA — GANTI URL INI KE PUNYAMU
 --=====================================================================
-local SCRIPTS_JSON_URL = "https://raw.githubusercontent.com/xanderzachky/mrxenohub.lua/main/scripts.json"
+local SCRIPTS_JSON_URL = "https://github.com/xanderzachky/mrxenohub.lua/blob/main/scripts.json"
 
 -- Fallback (kalau JSON gagal di-fetch / offline)
 local FALLBACK_SCRIPTS = {
