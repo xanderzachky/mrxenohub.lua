@@ -1,1 +1,34 @@
-
+{
+  "version": "3.0",
+  "author": "Mr.Xeno",
+  "updated": "2026-10-05",
+  "scripts": [
+    {
+      "name": "John Doe",
+      "category": "Combat far",
+      "icon": "🔫",
+      "thumbnail": "rbxassetid://1234567890",
+      "desc": "Script John Doe Fe prop",
+      "type": "button",
+      "url": "https://pastebin.com/raw/Q8dznf77"
+    },
+    {
+      "name": "GluttonyKid",
+      "category": "Combat short",
+      "icon": "😈",
+      "thumbnail": "rbxassetid://0987654321",
+      "desc": "Script GluttonyKid With prop",
+      "type": "button",
+      "url": "https://pastebin.com/raw/w3WFT9Vf"
+    },
+    {
+      "name": "More later",
+      "category": "Utility",
+      "icon": "⚡",
+      "thumbnail": "",
+      "desc": "Placeholder.",
+      "type": "button",
+      "url": "https://pastebin.com/raw/CONTOH"
+    }
+  ]
+}
